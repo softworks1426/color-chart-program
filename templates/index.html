@@ -1,0 +1,67 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Color Chart Program</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="text-align:center;">Color Chart Program</h1>
+  <form class="search-form" onsubmit="event.preventDefault(); startSearch();">
+    <input type="text" id="query" placeholder="Search keyword..." />
+    <button type="submit">Search</button>
+  </form>
+  <div class="grid" id="color-grid"></div>
+
+  <script>
+    let offset = 1;
+    let query = "";
+    let loading = false;
+
+    function startSearch() {
+      const input = document.getElementById("query").value.trim();
+      if (!input) return;
+      query = input;
+      offset = 1;
+      document.getElementById("color-grid").innerHTML = "";
+      loadMore();
+    }
+
+    async function loadMore() {
+      if (loading || !query) return;
+      loading = true;
+      const res = await fetch(`/load?q=${encodeURIComponent(query)}&offset=${offset}`);
+      const items = await res.json();
+      const grid = document.getElementById("color-grid");
+
+      items.forEach(item => {
+        const a = document.createElement("a");
+        a.href = item.link;
+        a.target = "_blank";
+        const div = document.createElement("div");
+        div.className = "color-block";
+        div.style.backgroundColor = item.color;
+        a.appendChild(div);
+        grid.appendChild(a);
+      });
+
+      offset += 1;
+      loading = false;
+    }
+
+    window.addEventListener("scroll", () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
+        loadMore();
+      }
+    });
+  </script>
+</body>
+</html>

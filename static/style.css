@@ -1,0 +1,33 @@
+
+body {
+  font-family: sans-serif;
+}
+.search-form {
+  max-width: 600px;
+  margin: 20px auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.search-form input[type="text"] {
+  padding: 8px;
+  flex: 1;
+}
+.search-form button {
+  padding: 8px 12px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.grid a {
+  display: block;
+  text-decoration: none;
+}
+.color-block {
+  width: 100%;
+  padding-bottom: 100%;
+  border-radius: 0;
+}
