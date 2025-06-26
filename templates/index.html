@@ -1,24 +1,104 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
   <meta charset="utf-8">
   <title>Color Chart Program</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/static/style.css">
   <style>
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
+      font-family: sans-serif;
+    }
+
+    .start-screen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+      padding: 0 1em;
+    }
+
+    .top-bar {
+      display: none;
+      padding: 1em;
+      text-align: center;
+    }
+
+    .start-screen h1,
+    .top-bar h1 {
+      margin-bottom: 0.15em;
+      font-size: 2em;
+    }
+
+    .search-form {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.5em;
+    }
+
+    .search-form input {
+      padding: 0.5em;
+      font-size: 16px;
+      width: 360px;
+      max-width: 90vw;
+      box-sizing: border-box;
+    }
+
+    .search-form button {
+      padding: 0.5em 1em;
+      font-size: 16px;
+    }
+
+    h1 a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    @media (max-width: 480px) {
+      .search-form input {
+        width: 100%;
+      }
+
+      .search-form {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .search-form button {
+        width: 100%;
+      }
+
+      .start-screen h1,
+      .top-bar h1 {
+        font-size: 1.5em;
+      }
     }
   </style>
 </head>
 <body>
-  <h1 style="text-align:center;">Color Chart Program</h1>
-  <form class="search-form" onsubmit="event.preventDefault(); startSearch();">
-    <input type="text" id="query" placeholder="Search keyword..." />
-    <button type="submit">Search</button>
-  </form>
+  <div class="start-screen" id="start-screen">
+    <h1><a href="/">Color Chart Program</a></h1>
+    <form class="search-form" onsubmit="event.preventDefault(); startSearch();">
+      <input type="text" id="query" placeholder="Search keyword..." />
+      <button type="submit">Search</button>
+    </form>
+  </div>
+
+  <div class="top-bar" id="top-bar">
+    <h1><a href="/">Color Chart Program</a></h1>
+    <form class="search-form" onsubmit="event.preventDefault(); startSearch();">
+      <input type="text" id="query-top" placeholder="Search keyword..." />
+      <button type="submit">Search</button>
+    </form>
+  </div>
+
   <div class="grid" id="color-grid"></div>
 
   <script>
@@ -27,10 +107,15 @@
     let loading = false;
 
     function startSearch() {
-      const input = document.getElementById("query").value.trim();
+      const input = document.getElementById("query")?.value.trim() || document.getElementById("query-top")?.value.trim();
       if (!input) return;
+
       query = input;
       offset = 1;
+
+      document.getElementById("start-screen").style.display = "none";
+      document.getElementById("top-bar").style.display = "block";
+      document.getElementById("query-top").value = query;
       document.getElementById("color-grid").innerHTML = "";
       loadMore();
     }
