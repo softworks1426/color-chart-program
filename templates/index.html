@@ -107,15 +107,23 @@
     let loading = false;
 
     function startSearch() {
-      const input = document.getElementById("query")?.value.trim() || document.getElementById("query-top")?.value.trim();
-      if (!input) return;
+      let input = "";
+      const inputMain = document.getElementById("query");
+      const inputTop = document.getElementById("query-top");
+
+      if (inputMain && inputMain.offsetParent !== null) {
+        input = inputMain.value.trim();
+      } else if (inputTop && inputTop.offsetParent !== null) {
+        input = inputTop.value.trim();
+      }
+
+      if (!input) return; // 入力なしなら処理しない
 
       query = input;
       offset = 1;
 
       document.getElementById("start-screen").style.display = "none";
       document.getElementById("top-bar").style.display = "block";
-      document.getElementById("query-top").value = query;
       document.getElementById("color-grid").innerHTML = "";
       loadMore();
     }
