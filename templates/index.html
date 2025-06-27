@@ -115,12 +115,16 @@
     let query = "";
     let loading = false;
 
-    function startSearch() {
+    function startSearch(queryInput = null, pushState = true) {
       let input = "";
       const inputMain = document.getElementById("query");
       const inputTop = document.getElementById("query-top");
 
-      if (inputMain && inputMain.offsetParent !== null) {
+      if (queryInput !== null) {
+        input = queryInput.trim();
+        if (inputMain) inputMain.value = input;
+        if (inputTop) inputTop.value = input;
+      } else if (inputMain && inputMain.offsetParent !== null) {
         input = inputMain.value.trim();
       } else if (inputTop && inputTop.offsetParent !== null) {
         input = inputTop.value.trim();
@@ -131,12 +135,15 @@
       query = input;
       offset = 1;
 
-      // UI 切り替え
       document.getElementById("start-screen").style.display = "none";
       document.getElementById("top-bar").style.display = "block";
-      document.getElementById("query-top").value = query; // ← 再代入で消えないように
-
+      document.getElementById("query-top").value = query;
       document.getElementById("color-grid").innerHTML = "";
+
+      if (pushState) {
+        history.pushState({ query }, '', `?q=${encodeURIComponent(query)}`);
+      }
+
       loadMore();
     }
 
@@ -167,9 +174,34 @@
       loadingIndicator.style.display = "none";
     }
 
+    // 無限スクロール
     window.addEventListener("scroll", () => {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
         loadMore();
+      }
+    });
+
+    // popstate: 戻る/進む対応
+    window.addEventListener("popstate", (event) => {
+      const state = event.state;
+      if (state && state.query) {
+        startSearch(state.query, false);
+      } else {
+        document.getElementById("start-screen").style.display = "flex";
+        document.getElementById("top-bar").style.display = "none";
+        document.getElementById("color-grid").innerHTML = "";
+        query = "";
+        offset = 1;
+      }
+    });
+
+    // 初期URLパラメータ対応
+    window.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get("q");
+      if (q) {
+        history.replaceState({ query: q }, '', window.location.href);
+        startSearch(q, false);
       }
     });
   </script>
