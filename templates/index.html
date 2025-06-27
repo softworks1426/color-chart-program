@@ -61,6 +61,14 @@
       color: inherit;
     }
 
+    .loading-indicator {
+      text-align: center;
+      font-size: 14px;
+      color: #888;
+      padding: 1em;
+      display: none;
+    }
+
     @media (max-width: 480px) {
       .search-form input {
         width: 100%;
@@ -99,6 +107,7 @@
     </form>
   </div>
 
+  <div class="loading-indicator" id="loading-indicator">Loading...</div>
   <div class="grid" id="color-grid"></div>
 
   <script>
@@ -117,13 +126,16 @@
         input = inputTop.value.trim();
       }
 
-      if (!input) return; // 入力なしなら処理しない
+      if (!input) return;
 
       query = input;
       offset = 1;
 
+      // UI 切り替え
       document.getElementById("start-screen").style.display = "none";
       document.getElementById("top-bar").style.display = "block";
+      document.getElementById("query-top").value = query; // ← 再代入で消えないように
+
       document.getElementById("color-grid").innerHTML = "";
       loadMore();
     }
@@ -131,6 +143,10 @@
     async function loadMore() {
       if (loading || !query) return;
       loading = true;
+
+      const loadingIndicator = document.getElementById("loading-indicator");
+      loadingIndicator.style.display = "block";
+
       const res = await fetch(`/load?q=${encodeURIComponent(query)}&offset=${offset}`);
       const items = await res.json();
       const grid = document.getElementById("color-grid");
@@ -148,6 +164,7 @@
 
       offset += 1;
       loading = false;
+      loadingIndicator.style.display = "none";
     }
 
     window.addEventListener("scroll", () => {
