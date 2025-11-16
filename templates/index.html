@@ -4,7 +4,6 @@
   <meta charset="utf-8">
   <title>Color Chart Program</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="/static/style.css">
   <style>
     html, body {
       margin: 0;
@@ -13,41 +12,45 @@
       font-family: sans-serif;
     }
 
-    .start-screen {
+    .start-screen, .top-bar {
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      height: 100vh;
       text-align: center;
-      padding: 0 1em;
+      padding: 1em;
+    }
+
+    .start-screen {
+      height: 100vh;
     }
 
     .top-bar {
       display: none;
-      padding: 1em;
-      text-align: center;
     }
 
-    .start-screen h1,
-    .top-bar h1 {
-      margin-bottom: 0.15em;
-      font-size: 2em;
+    h1, h1 a {
+      margin-bottom: 0.5em;
+      font-size: 1.5em; /* ← ここが修正ポイント */
+      text-decoration: none;
+      color: black;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .search-form {
       display: flex;
-      flex-direction: row;
       justify-content: center;
-      flex-wrap: wrap;
+      align-items: center;
       gap: 0.5em;
     }
 
-    .search-form input {
+    .search-form input[type="text"] {
       padding: 0.5em;
       font-size: 16px;
-      width: 360px;
-      max-width: 90vw;
+      width: 260px;
+      max-width: 80vw;
       box-sizing: border-box;
     }
 
@@ -56,9 +59,8 @@
       font-size: 16px;
     }
 
-    h1 a {
-      text-decoration: none;
-      color: inherit;
+    .search-form input[type="range"] {
+      width: 100px;
     }
 
     .loading-indicator {
@@ -69,23 +71,32 @@
       display: none;
     }
 
-    @media (max-width: 480px) {
-      .search-form input {
-        width: 100%;
-      }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
 
+    .color-block {
+      width: 100%;
+      padding-bottom: 100%;
+      border-radius: 0;
+    }
+
+    @media (max-width: 480px) {
       .search-form {
         flex-direction: column;
-        align-items: center;
       }
 
-      .search-form button {
+      .search-form input,
+      .search-form button,
+      .search-form input[type="range"] {
         width: 100%;
       }
 
-      .start-screen h1,
-      .top-bar h1 {
-        font-size: 1.5em;
+      h1 {
+        font-size: 1.1em;
       }
     }
   </style>
@@ -104,6 +115,7 @@
     <form class="search-form" onsubmit="event.preventDefault(); startSearch();">
       <input type="text" id="query-top" placeholder="Search keyword..." />
       <button type="submit">Search</button>
+      <input type="range" id="size-slider-top" min="40" max="200" value="80" title="サイズ調整" />
     </form>
   </div>
 
@@ -122,8 +134,6 @@
 
       if (queryInput !== null) {
         input = queryInput.trim();
-        if (inputMain) inputMain.value = input;
-        if (inputTop) inputTop.value = input;
       } else if (inputMain && inputMain.offsetParent !== null) {
         input = inputMain.value.trim();
       } else if (inputTop && inputTop.offsetParent !== null) {
@@ -136,7 +146,7 @@
       offset = 1;
 
       document.getElementById("start-screen").style.display = "none";
-      document.getElementById("top-bar").style.display = "block";
+      document.getElementById("top-bar").style.display = "flex";
       document.getElementById("query-top").value = query;
       document.getElementById("color-grid").innerHTML = "";
 
@@ -158,6 +168,11 @@
       const items = await res.json();
       const grid = document.getElementById("color-grid");
 
+      if (items.length === 0) {
+        loadingIndicator.textContent = "これ以上画像はありません";
+        return;
+      }
+
       items.forEach(item => {
         const a = document.createElement("a");
         a.href = item.link;
@@ -174,14 +189,35 @@
       loadingIndicator.style.display = "none";
     }
 
-    // 無限スクロール
-    window.addEventListener("scroll", () => {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
         loadMore();
+      }
+    }, { rootMargin: "200px" });
+
+    const loadingTarget = document.createElement("div");
+    document.body.appendChild(loadingTarget);
+    observer.observe(loadingTarget);
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const slider = document.getElementById("size-slider-top");
+      const grid = document.getElementById("color-grid");
+      if (slider) {
+        slider.addEventListener("input", () => {
+          const size = slider.value;
+          grid.style.gridTemplateColumns = `repeat(auto-fill, minmax(${size}px, 1fr))`;
+        });
+        grid.style.gridTemplateColumns = `repeat(auto-fill, minmax(${slider.value}px, 1fr))`;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get("q");
+      if (q) {
+        history.replaceState({ query: q }, '', window.location.href);
+        startSearch(q, false);
       }
     });
 
-    // popstate: 戻る/進む対応
     window.addEventListener("popstate", (event) => {
       const state = event.state;
       if (state && state.query) {
@@ -192,16 +228,6 @@
         document.getElementById("color-grid").innerHTML = "";
         query = "";
         offset = 1;
-      }
-    });
-
-    // 初期URLパラメータ対応
-    window.addEventListener("DOMContentLoaded", () => {
-      const params = new URLSearchParams(window.location.search);
-      const q = params.get("q");
-      if (q) {
-        history.replaceState({ query: q }, '', window.location.href);
-        startSearch(q, false);
       }
     });
   </script>
