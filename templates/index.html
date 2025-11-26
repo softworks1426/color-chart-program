@@ -31,7 +31,7 @@
 
     h1, h1 a {
       margin-bottom: 0.5em;
-      font-size: 1.5em; /* ← ここが修正ポイント */
+      font-size: 1.5em;
       text-decoration: none;
       color: black;
       white-space: nowrap;
@@ -119,8 +119,10 @@
     </form>
   </div>
 
-  <div class="loading-indicator" id="loading-indicator">Loading...</div>
+  <!-- グリッド → Loading → 観測ターゲットの順番に変更 -->
   <div class="grid" id="color-grid"></div>
+  <div class="loading-indicator" id="loading-indicator">Loading...</div>
+  <div id="loading-target"></div>
 
   <script>
     let offset = 1;
@@ -163,6 +165,7 @@
 
       const loadingIndicator = document.getElementById("loading-indicator");
       loadingIndicator.style.display = "block";
+      loadingIndicator.textContent = "Loading...";
 
       const res = await fetch(`/load?q=${encodeURIComponent(query)}&offset=${offset}`);
       const items = await res.json();
@@ -170,6 +173,7 @@
 
       if (items.length === 0) {
         loadingIndicator.textContent = "これ以上画像はありません";
+        loading = false;
         return;
       }
 
@@ -189,15 +193,17 @@
       loadingIndicator.style.display = "none";
     }
 
+    // IntersectionObserver: グリッドの直下にある #loading-target を監視
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
         loadMore();
       }
     }, { rootMargin: "200px" });
 
-    const loadingTarget = document.createElement("div");
-    document.body.appendChild(loadingTarget);
-    observer.observe(loadingTarget);
+    const loadingTarget = document.getElementById("loading-target");
+    if (loadingTarget) {
+      observer.observe(loadingTarget);
+    }
 
     window.addEventListener("DOMContentLoaded", () => {
       const slider = document.getElementById("size-slider-top");
